@@ -29,5 +29,5 @@ variable "pg_superuser" {
 
 variable "databases" {
   type    = list(string)
-  default = ["kunden", "gehalt", "versicherung"]
+  default = ["customer", "salary", "contract"]
 }

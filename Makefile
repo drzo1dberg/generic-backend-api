@@ -33,7 +33,7 @@ down:
 	$(TF) -chdir=$(INFRA) destroy -auto-approve -input=false
 
 # make psql            -> Admin auf Datenbank postgres
-# make psql DB_NAME=gehalt
+# make psql DB_NAME=salary
 DB_NAME ?= postgres
 psql:
 	docker exec -it $(CONTAINER) psql -U $(ADMIN) -d $(DB_NAME)
@@ -41,13 +41,15 @@ psql:
 fmt:
 	$(TF) fmt -recursive
 
+# Reihenfolge ist Absicht: contract importiert per FDW aus customer.
+SQL_DBS ?= customer salary contract
+
 # Spielt sql/<db>/*.sql in Dateinamen-Reihenfolge ein, jeweils als <db>_owner
 # (damit die Default Privileges greifen). Nur auf frischer Instanz: nicht idempotent.
 # Ersetzt in Schritt 8 durch ein echtes Migrationstool.
 sql:
-	@for dir in sql/*/; do \
-	  db=$$(basename $$dir); \
-	  for f in $$dir*.sql; do \
+	@for db in $(SQL_DBS); do \
+	  for f in sql/$$db/*.sql; do \
 	    [ -e "$$f" ] || continue; \
 	    echo "==> $$f (als $${db}_owner)"; \
 	    docker exec -i -e PGOPTIONS="-c role=$${db}_owner" $(CONTAINER) \

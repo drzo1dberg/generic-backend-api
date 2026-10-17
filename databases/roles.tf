@@ -7,8 +7,9 @@ locals {
   ])
 
   login_roles = {
-    backend = "rw"
-    analyst = "ro"
+    backend = [for db in var.databases : "${db}_rw"]
+    analyst = [for db in var.databases : "${db}_ro"]
+    fdw_kunden = ["kunden_ro"]
   }
 
   connect_grants = {
@@ -66,7 +67,7 @@ resource "postgresql_role" "login" {
   password = random_password.login[each.key].result
 
   roles = [
-    for db in var.databases : postgresql_role.group["${db}_${each.value}"].name
+   for g in each.value : postgresql_role.group[g].name
   ]
 }
 

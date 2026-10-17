@@ -39,6 +39,8 @@ resource "docker_container" "postgres" {
   env = [
     "POSTGRES_USER=${var.admin_user}",
     "POSTGRES_PASSWORD=${random_password.admin.result}",
+    # allow TCP from localhost only with pw
+    "POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256 --auth-local=trust",
   ]
 
   # pg_stat_statements muss vorgeladen werden (auch auf Azure über Serverparameter möglich).

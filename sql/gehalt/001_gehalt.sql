@@ -28,5 +28,3 @@ CREATE POLICY gehalt_ro_all on gehalt
 FOR SELECT
 TO gehalt_ro
 USING (true);
-
-RESET ROLE;

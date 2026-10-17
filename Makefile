@@ -12,7 +12,7 @@ db_env = \
 CONTAINER = $$($(TF) -chdir=$(INFRA) output -raw container_name)
 ADMIN     = $$($(TF) -chdir=$(INFRA) output -raw admin_user)
 
-.PHONY: up down init plan psql fmt
+.PHONY: up down init plan psql fmt sql
 
 init:
 	$(TF) -chdir=$(INFRA) init -input=false
@@ -40,3 +40,17 @@ psql:
 
 fmt:
 	$(TF) fmt -recursive
+
+# Spielt sql/<db>/*.sql in Dateinamen-Reihenfolge ein, jeweils als <db>_owner
+# (damit die Default Privileges greifen). Nur auf frischer Instanz: nicht idempotent.
+# Ersetzt in Schritt 8 durch ein echtes Migrationstool.
+sql:
+	@for dir in sql/*/; do \
+	  db=$$(basename $$dir); \
+	  for f in $$dir*.sql; do \
+	    [ -e "$$f" ] || continue; \
+	    echo "==> $$f (als $${db}_owner)"; \
+	    docker exec -i -e PGOPTIONS="-c role=$${db}_owner" $(CONTAINER) \
+	      psql -U $(ADMIN) -d $$db -v ON_ERROR_STOP=1 -q -f - < $$f || exit 1; \
+	  done; \
+	done
